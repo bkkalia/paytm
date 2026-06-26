@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Complete PayTM Payment Gateway PHP integration guide with working code samples. Fix 501 errors, checksum issues, and popup problems.">
+<meta name="robots" content="index, follow">
+<title>PayTM Payment Gateway — PHP Integration Guide (2026)</title>
+<style>
+:root {
+    --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #64748b;
+    --border: #e2e8f0; --primary: #1a56db; --primary-bg: #eff6ff;
+    --danger: #dc2626; --danger-bg: #fef2f2; --ok: #16a34a; --ok-bg: #f0fdf4;
+    --warn: #d97706; --warn-bg: #fffbeb; --code-bg: #1e293b; --code-text: #e2e8f0;
+    --radius: 8px; --max-w: 820px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 0 16px 60px; }
+.container { max-width: var(--max-w); margin: 0 auto; }
+
+/* ── Header ─────────────────────────────── */
+.hero { background: linear-gradient(135deg, #1a56db 0%, #1e40af 100%); color: #fff; padding: 48px 32px; border-radius: 12px; margin: 32px 0 24px; text-align: center; }
+.hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+.hero p { opacity: .85; font-size: 15px; }
+
+/* ── Badges ─────────────────────────────── */
+.badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.badge { padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.15); }
+
+/* ── TOC ────────────────────────────────── */
+.toc { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 32px; }
+.toc h2 { font-size: 18px; margin-bottom: 12px; }
+.toc ol { padding-left: 20px; }
+.toc li { margin-bottom: 6px; }
+.toc a { color: var(--primary); text-decoration: none; font-weight: 500; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── Sections ───────────────────────────── */
+section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; }
+h2 { font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+h3 { font-size: 17px; font-weight: 600; margin: 20px 0 10px; color: var(--primary); }
+h4 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; }
+p { margin-bottom: 12px; }
+ul, ol { padding-left: 22px; margin-bottom: 12px; }
+li { margin-bottom: 4px; }
+
+/* ── Code ───────────────────────────────── */
+code { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; font-size: 13px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 20px; border-radius: var(--radius); overflow-x: auto; margin: 12px 0 20px; font-size: 13px; line-height: 1.6; }
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+/* ── Tables ─────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 12px 0 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 10px 14px; text-align: left; border: 1px solid var(--border); }
+th { background: #f8fafc; font-weight: 600; }
+tr:nth-child(even) td { background: #fafbfc; }
+
+/* ── Callouts ───────────────────────────── */
+.callout { padding: 14px 18px; border-radius: var(--radius); margin: 12px 0; font-size: 14px; border-left: 4px solid; }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger); color: #991b1b; }
+.callout.warn { background: var(--warn-bg); border-color: var(--warn); color: #92400e; }
+.callout.info { background: var(--primary-bg); border-color: var(--primary); color: #1e40af; }
+.callout.ok { background: var(--ok-bg); border-color: var(--ok); color: #166534; }
+.callout strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ── Step Counter ───────────────────────── */
+.step { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--primary); color: #fff; border-radius: 50%; font-size: 13px; font-weight: 700; margin-right: 8px; flex-shrink: 0; }
+
+/* ── Footer ─────────────────────────────── */
+footer { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
+footer a { color: var(--primary); }
+
+/* ── Responsive ─────────────────────────── */
+@media (max-width: 600px) {
+    .hero { padding: 32px 20px; }
+    .hero h1 { font-size: 22px; }
+    section { padding: 20px; }
+    pre { padding: 14px; font-size: 12px; }
+    th, td { padding: 6px 8px; font-size: 12px; }
+}
+
+/* ── Syntax Highlighting ────────────────── */
+.kw { color: #c792ea; } .str { color: #c3e88d; } .cm { color: #546e7a; font-style: italic; }
+.fn { color: #82aaff; } .var { color: #f78c6c; } .num { color: #f78c6c; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<header class="hero">
+    <h1>PayTM Payment Gateway — PHP Integration Guide</h1>
+    <p>Complete step-by-step tutorial with working code. Fixes 501 errors, checksum issues, and silent popup failures.</p>
+    <div class="badges">
+        <span class="badge">PHP 7.4+ / 8.x</span>
+        <span class="badge">cPanel Compatible</span>
+        <span class="badge">Cloudflare Ready</span>
+        <span class="badge">Updated June 2026</span>
+    </div>
+</header>
+
+<!-- ═══════════════════════════ TOC ═══════════════════════════ -->
+<nav class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#domain">API Domain — The Hidden Trap</a></li>
+        <li><a href="#checksum">Checksum Algorithm</a></li>
+        <li><a href="#backend">Backend: Create Transaction Token</a></li>
+        <li><a href="#frontend">Frontend: Open Payment Popup</a></li>
+        <li><a href="#callback">Callback: Verify Payment</a></li>
+        <li><a href="#structure">Complete File Structure</a></li>
+        <li><a href="#errors">Common Errors &amp; Solutions</a></li>
+        <li><a href="#download">Downloadable Sample Code</a></li>
+        <li><a href="#lessons">Production Lessons Learned</a></li>
+    </ol>
+</nav>
+
+<!-- ═══════════════════════════ 1. PREREQUISITES ═══════════════════════════ -->
+<section id="prerequisites">
+    <h2>1. Prerequisites</h2>
+
+    <h3>From PayTM Dashboard</h3>
+    <ol>
+        <li>Log into <a href="https://dashboard.paytmpayments.com/next/apikeys" target="_blank" rel="noopener">PayTM Dashboard → API Keys</a></li>
+        <li>Get your <strong>Merchant ID (MID)</strong>, <strong>Merchant Key</strong>, and <strong>Website Name</strong>:
+            <ul>
+                <li>Staging: Website = <code>WEBSTAGING</code></li>
+                <li>Production: Website = <code>DEFAULT</code></li>
+            </ul>
+        </li>
+        <li>For production, <a href="https://dashboard.paytmpayments.com/next/activate" target="_blank" rel="noopener">activate your account</a> first</li>
+    </ol>
+
+    <h3>Server Requirements</h3>
+    <ul>
+        <li>PHP 7.4+ with <code>openssl</code> and <code>curl</code> extensions</li>
+        <li>HTTPS domain (required by PayTM JS Checkout SDK)</li>
+    </ul>
+</section>
+
+<!-- ═══════════════════════════ 2. API DOMAIN ═══════════════════════════ -->
+<section id="domain">
+    <h2>2. API Domain — The Hidden Trap</h2>
+
+    <div class="callout danger">
+        <strong>⚠️ #1 cause of "501 System Error"</strong>
+        PayTM has two sets of API domains. The official docs reference the legacy one, which returns 501 for newer merchant accounts.
+    </div>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th></th><th>❌ Legacy (broken)</th><th>✅ Current (working)</th></tr>
+        <tr><td>Production</td><td><code>securegw.paytm.in</code></td><td><code>secure.paytmpayments.com</code></td></tr>
+        <tr><td>Staging</td><td><code>securegw-stage.paytm.in</code></td><td><code>securestage.paytmpayments.com</code></td></tr>
+    </table>
+    </div>
+
+<pre><code><span class="cm">// ✅ CORRECT — use these URLs</span>
+<span class="var">$prodBaseUrl</span>  = <span class="str">"https://secure.paytmpayments.com"</span>;
+<span class="var">$stageBaseUrl</span> = <span class="str">"https://securestage.paytmpayments.com"</span>;</code></pre>
+
+    <div class="callout info">
+        <strong>How we found this</strong>
+        The official PHP SDK docs and sample code use the legacy domain. The working WordPress plugin uses the new domain. The difference is undocumented.
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 3. CHECKSUM ═══════════════════════════ -->
+<section id="checksum">
+    <h2>3. Checksum Algorithm</h2>
+
+    <p>PayTM uses <strong>AES-128-CBC + SHA-256</strong> for request signing. The algorithm is:</p>
+
+    <ol>
+        <li>Generate 4 random alphanumeric characters (the "salt")</li>
+        <li>Compute: <code>hashInput = bodyJSON + "|" + salt</code></li>
+        <li>Compute: <code>sha256Hash = SHA-256(hashInput)</code></li>
+        <li>Concatenate: <code>toEncrypt = sha256Hash + salt</code></li>
+        <li>Encrypt: <code>signature = AES-128-CBC(toEncrypt, merchantKey, IV="@@@@&&&&####$$$$")</code></li>
+    </ol>
+
+    <h3>checksum.php — Full Implementation</h3>
+
+<pre><code><span class="kw">&lt;?php</span>
+<span class="cm">/** IV must be exactly 16 bytes */</span>
+<span class="kw">define</span>(<span class="str">'PTM_CHECKSUM_IV'</span>, <span class="str">"@@@@&&&&####$$$$"</span>);
+
+<span class="kw">function</span> <span class="fn">ptm_generate_checksum</span>(<span class="kw">string</span> <span class="var">$body</span>, <span class="kw">string</span> <span class="var">$key</span>): <span class="kw">string</span> {
+    <span class="var">$salt</span> = <span class="fn">ptm_random_string</span>(<span class="num">4</span>);
+    <span class="var">$hashInput</span> = <span class="var">$body</span> . <span class="str">'|'</span> . <span class="var">$salt</span>;
+    <span class="var">$sha256Hash</span> = <span class="fn">hash</span>(<span class="str">'sha256'</span>, <span class="var">$hashInput</span>);
+    <span class="var">$toEncrypt</span> = <span class="var">$sha256Hash</span> . <span class="var">$salt</span>;
+    <span class="kw">return</span> <span class="fn">ptm_checksum_encrypt</span>(<span class="var">$toEncrypt</span>, <span class="var">$key</span>);
+}
+
+<span class="kw">function</span> <span class="fn">ptm_verify_checksum</span>(<span class="kw">string</span> <span class="var">$body</span>, <span class="kw">string</span> <span class="var">$checksum</span>, <span class="kw">string</span> <span class="var">$key</span>): <span class="kw">bool</span> {
+    <span class="var">$decrypted</span> = <span class="fn">ptm_checksum_decrypt</span>(<span class="var">$checksum</span>, <span class="var">$key</span>);
+    <span class="kw">if</span> (<span class="var">$decrypted</span> === <span class="kw">false</span> || <span class="fn">strlen</span>(<span class="var">$decrypted</span>) &lt; <span class="num">4</span>) <span class="kw">return false</span>;
+    <span class="var">$salt</span> = <span class="fn">substr</span>(<span class="var">$decrypted</span>, -<span class="num">4</span>);
+    <span class="var">$expectedHash</span> = <span class="fn">substr</span>(<span class="var">$decrypted</span>, <span class="num">0</span>, -<span class="num">4</span>);
+    <span class="var">$localHash</span> = <span class="fn">hash</span>(<span class="str">'sha256'</span>, <span class="var">$body</span> . <span class="str">'|'</span> . <span class="var">$salt</span>);
+    <span class="kw">return</span> <span class="fn">hash_equals</span>(<span class="var">$expectedHash</span>, <span class="var">$localHash</span>);
+}
+
+<span class="kw">function</span> <span class="fn">ptm_checksum_encrypt</span>(<span class="kw">string</span> <span class="var">$input</span>, <span class="kw">string</span> <span class="var">$key</span>): <span class="kw">string</span> {
+    <span class="cm">/* html_entity_decode is required by PayTM's official SDK */</span>
+    <span class="kw">return</span> <span class="fn">openssl_encrypt</span>(<span class="var">$input</span>, <span class="str">'AES-128-CBC'</span>,
+        <span class="fn">html_entity_decode</span>(<span class="var">$key</span>), <span class="num">0</span>, <span class="kw">PTM_CHECKSUM_IV</span>);
+}
+
+<span class="kw">function</span> <span class="fn">ptm_checksum_decrypt</span>(<span class="kw">string</span> <span class="var">$encrypted</span>, <span class="kw">string</span> <span class="var">$key</span>) {
+    <span class="kw">return</span> <span class="fn">openssl_decrypt</span>(<span class="var">$encrypted</span>, <span class="str">'AES-128-CBC'</span>,
+        <span class="fn">html_entity_decode</span>(<span class="var">$key</span>), <span class="num">0</span>, <span class="kw">PTM_CHECKSUM_IV</span>);
+}
+
+<span class="kw">function</span> <span class="fn">ptm_random_string</span>(<span class="kw">int</span> <span class="var">$length</span> = <span class="num">4</span>): <span class="kw">string</span> {
+    <span class="var">$chars</span> = <span class="str">'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'</span>;
+    <span class="var">$out</span> = <span class="str">''</span>;
+    <span class="kw">for</span> (<span class="var">$i</span> = <span class="num">0</span>; <span class="var">$i</span> &lt; <span class="var">$length</span>; <span class="var">$i</span>++) {
+        <span class="var">$out</span> .= <span class="var">$chars</span>[<span class="fn">random_int</span>(<span class="num">0</span>, <span class="fn">strlen</span>(<span class="var">$chars</span>) - <span class="num">1</span>)];
+    }
+    <span class="kw">return</span> <span class="var">$out</span>;
+}
+
+<span class="kw">function</span> <span class="fn">ptm_http_post</span>(<span class="kw">string</span> <span class="var">$url</span>, <span class="kw">string</span> <span class="var">$jsonBody</span>): <span class="kw">array</span> {
+    <span class="var">$ch</span> = <span class="fn">curl_init</span>(<span class="var">$url</span>);
+    <span class="fn">curl_setopt_array</span>(<span class="var">$ch</span>, [
+        <span class="kw">CURLOPT_POST</span>           =&gt; <span class="kw">true</span>,
+        <span class="kw">CURLOPT_POSTFIELDS</span>     =&gt; <span class="var">$jsonBody</span>,
+        <span class="kw">CURLOPT_RETURNTRANSFER</span> =&gt; <span class="kw">true</span>,
+        <span class="kw">CURLOPT_TIMEOUT</span>        =&gt; <span class="num">15</span>,
+        <span class="kw">CURLOPT_CONNECTTIMEOUT</span> =&gt; <span class="num">10</span>,
+        <span class="kw">CURLOPT_HTTPHEADER</span>     =&gt; [<span class="str">'Content-Type: application/json'</span>],
+    ]);
+    <span class="var">$res</span>      = <span class="fn">curl_exec</span>(<span class="var">$ch</span>);
+    <span class="var">$httpCode</span> = (<span class="kw">int</span>) <span class="fn">curl_getinfo</span>(<span class="var">$ch</span>, <span class="kw">CURLINFO_HTTP_CODE</span>);
+    <span class="var">$error</span>    = <span class="fn">curl_error</span>(<span class="var">$ch</span>);
+    <span class="fn">curl_close</span>(<span class="var">$ch</span>);
+    <span class="kw">return</span> [<span class="str">'http_code'</span> =&gt; <span class="var">$httpCode</span>, <span class="str">'body'</span> =&gt; <span class="var">$res</span>, <span class="str">'error'</span> =&gt; <span class="var">$error</span> ?: <span class="kw">null</span>];
+}</code></pre>
+
+    <div class="callout warn">
+        <strong>Key points</strong>
+        Use <code>html_entity_decode($key)</code> before OpenSSL. Use <code>random_int()</code> not <code>rand()</code>. The IV is exactly 16 bytes: <code>@@@@&&&&####$$$$</code>.
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 4. BACKEND ═══════════════════════════ -->
+<section id="backend">
+    <h2>4. Backend: Create Transaction Token</h2>
+
+    <p>The <code>POST /theia/api/v1/initiateTransaction</code> endpoint returns a <code>txnToken</code> used by the frontend.</p>
+
+    <h3>Critical: Request Format</h3>
+
+<pre><code>{
+  <span class="str">"head"</span>: {
+    <span class="str">"signature"</span>: <span class="str">"&lt;checksum of body JSON&gt;"</span>
+  },
+  <span class="str">"body"</span>: {
+    <span class="str">"requestType"</span>: <span class="str">"Payment"</span>,
+    <span class="str">"mid"</span>:         <span class="str">"YOUR_MID"</span>,
+    <span class="str">"websiteName"</span>: <span class="str">"WEBSTAGING"</span>,
+    <span class="str">"orderId"</span>:     <span class="str">"ORDER_123"</span>,
+    <span class="str">"callbackUrl"</span>: <span class="str">"https://yoursite.com/callback.php"</span>,
+    <span class="str">"txnAmount"</span>:   { <span class="str">"value"</span>: <span class="str">"10.00"</span>, <span class="str">"currency"</span>: <span class="str">"INR"</span> },
+    <span class="str">"userInfo"</span>:    { <span class="str">"custId"</span>: <span class="str">"CUST_001"</span> }
+  }
+}</code></pre>
+
+    <div class="callout danger">
+        <strong>⚠️ The head must contain ONLY "signature"</strong>
+        Do NOT send <code>requestTimestamp</code>, <code>channelId</code>, <code>clientId</code>, or <code>version</code> — they cause 501 errors.
+    </div>
+
+    <div class="callout danger">
+        <strong>⚠️ JSON encoding flags</strong>
+        Use <code>json_encode($data, JSON_UNESCAPED_SLASHES)</code> only. Do NOT add <code>JSON_UNESCAPED_UNICODE</code> — it silently breaks checksum verification.
+    </div>
+
+    <h3>create-order.php — Full Implementation</h3>
+
+<pre><code><span class="kw">&lt;?php</span>
+<span class="fn">header</span>(<span class="str">"Content-Type: application/json"</span>);
+<span class="fn">header</span>(<span class="str">"X-Content-Type-Options: nosniff"</span>);
+<span class="fn">header</span>(<span class="str">"X-Accel-Buffering: no"</span>);  <span class="cm">// prevent Cloudflare/nginx buffering</span>
+
+<span class="cm">// Prevent browser timeout during PayTM API call</span>
+<span class="kw">if</span> (<span class="fn">ob_get_level</span>()) { <span class="fn">ob_end_flush</span>(); }
+<span class="fn">header</span>(<span class="str">'Connection: close'</span>);
+<span class="fn">ignore_user_abort</span>(<span class="kw">true</span>);
+<span class="fn">set_time_limit</span>(<span class="num">30</span>);
+
+<span class="kw">require_once</span> <span class="kw">__DIR__</span> . <span class="str">'/checksum.php'</span>;
+
+<span class="kw">if</span> (<span class="var">$_SERVER</span>[<span class="str">'REQUEST_METHOD'</span>] !== <span class="str">'POST'</span>) {
+    <span class="fn">http_response_code</span>(<span class="num">405</span>);
+    <span class="kw">echo</span> <span class="fn">json_encode</span>([<span class="str">'error'</span> =&gt; <span class="str">'Method not allowed'</span>]);
+    <span class="kw">exit</span>;
+}
+
+<span class="cm">// ═══════════ YOUR CREDENTIALS ═══════════</span>
+<span class="var">$ptmMid</span>  = <span class="str">"YOUR_MID_HERE"</span>;
+<span class="var">$ptmKey</span>  = <span class="str">"YOUR_MERCHANT_KEY_HERE"</span>;
+<span class="var">$ptmWeb</span>  = <span class="str">"WEBSTAGING"</span>;          <span class="cm">// "DEFAULT" for production</span>
+<span class="var">$ptmEnv</span>  = <span class="str">"staging"</span>;             <span class="cm">// "staging" or "production"</span>
+<span class="var">$baseUrl</span> = (<span class="var">$ptmEnv</span> === <span class="str">"staging"</span>)
+    ? <span class="str">"https://securestage.paytmpayments.com"</span>
+    : <span class="str">"https://secure.paytmpayments.com"</span>;
+
+<span class="cm">// ═══════════ Build order ═══════════</span>
+<span class="var">$amount</span>      = <span class="num">10.00</span>;
+<span class="var">$orderId</span>     = <span class="str">"ORDER_"</span> . <span class="fn">time</span>() . <span class="str">"_"</span> . <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(<span class="num">3</span>));
+<span class="var">$callbackUrl</span> = <span class="str">"https://yoursite.com/callback.php"</span>;
+
+<span class="var">$requestBody</span> = [
+    <span class="str">"body"</span> =&gt; [
+        <span class="str">"requestType"</span> =&gt; <span class="str">"Payment"</span>,
+        <span class="str">"mid"</span>         =&gt; <span class="var">$ptmMid</span>,
+        <span class="str">"websiteName"</span> =&gt; <span class="var">$ptmWeb</span>,
+        <span class="str">"orderId"</span>     =&gt; <span class="var">$orderId</span>,
+        <span class="str">"callbackUrl"</span> =&gt; <span class="var">$callbackUrl</span>,
+        <span class="str">"txnAmount"</span>   =&gt; [
+            <span class="str">"value"</span>    =&gt; <span class="fn">number_format</span>(<span class="var">$amount</span>, <span class="num">2</span>, <span class="str">'.'</span>, <span class="str">''</span>),
+            <span class="str">"currency"</span> =&gt; <span class="str">"INR"</span>,
+        ],
+        <span class="str">"userInfo"</span> =&gt; [<span class="str">"custId"</span> =&gt; <span class="str">"CUST_001"</span>],
+    ],
+    <span class="str">"head"</span> =&gt; [<span class="str">"signature"</span> =&gt; <span class="str">""</span>],
+];
+
+<span class="cm">// Sign — JSON_UNESCAPED_SLASHES ONLY, no JSON_UNESCAPED_UNICODE</span>
+<span class="var">$bodyJson</span> = <span class="fn">json_encode</span>(<span class="var">$requestBody</span>[<span class="str">"body"</span>], <span class="kw">JSON_UNESCAPED_SLASHES</span>);
+<span class="var">$checksum</span> = <span class="fn">ptm_generate_checksum</span>(<span class="var">$bodyJson</span>, <span class="var">$ptmKey</span>);
+<span class="var">$requestBody</span>[<span class="str">"head"</span>][<span class="str">"signature"</span>] = <span class="var">$checksum</span>;
+<span class="var">$fullPayload</span> = <span class="fn">json_encode</span>(<span class="var">$requestBody</span>, <span class="kw">JSON_UNESCAPED_SLASHES</span>);
+
+<span class="cm">// Flush before API call to prevent browser timeout</span>
+<span class="kw">echo</span> <span class="str">"\n"</span>;
+<span class="kw">if</span> (<span class="fn">ob_get_level</span>()) { <span class="fn">ob_flush</span>(); }
+<span class="fn">flush</span>();
+
+<span class="cm">// ═══════════ Call PayTM ═══════════</span>
+<span class="var">$url</span>  = <span class="var">$baseUrl</span> . <span class="str">"/theia/api/v1/initiateTransaction?mid="</span> . <span class="var">$ptmMid</span> . <span class="str">"&amp;orderId="</span> . <span class="var">$orderId</span>;
+<span class="var">$resp</span> = <span class="fn">ptm_http_post</span>(<span class="var">$url</span>, <span class="var">$fullPayload</span>);
+<span class="var">$data</span> = <span class="var">$resp</span>[<span class="str">'body'</span>] ? <span class="fn">json_decode</span>(<span class="var">$resp</span>[<span class="str">'body'</span>], <span class="kw">true</span>) : <span class="kw">null</span>;
+<span class="var">$txnToken</span> = <span class="var">$data</span>[<span class="str">'body'</span>][<span class="str">'txnToken'</span>] ?? <span class="kw">null</span>;
+
+<span class="kw">if</span> (!<span class="var">$txnToken</span>) {
+    <span class="fn">http_response_code</span>(<span class="num">502</span>);
+    <span class="fn">ob_clean</span>();
+    <span class="kw">echo</span> <span class="fn">json_encode</span>([
+        <span class="str">"error"</span>      =&gt; <span class="str">"Payment initiation failed"</span>,
+        <span class="str">"paytm_code"</span> =&gt; <span class="var">$data</span>[<span class="str">'body'</span>][<span class="str">'resultInfo'</span>][<span class="str">'resultCode'</span>] ?? <span class="str">'N/A'</span>,
+    ]);
+    <span class="kw">exit</span>;
+}
+
+<span class="fn">ob_clean</span>();
+<span class="kw">echo</span> <span class="fn">json_encode</span>([
+    <span class="str">"success"</span>   =&gt; <span class="kw">true</span>,
+    <span class="str">"txn_token"</span> =&gt; <span class="var">$txnToken</span>,
+    <span class="str">"order_id"</span>  =&gt; <span class="var">$orderId</span>,
+    <span class="str">"amount"</span>    =&gt; <span class="fn">number_format</span>(<span class="var">$amount</span>, <span class="num">2</span>, <span class="str">'.'</span>, <span class="str">''</span>),
+    <span class="str">"mid"</span>       =&gt; <span class="var">$ptmMid</span>,
+]);</code></pre>
+
+    <div class="callout info">
+        <strong>Why the early flush?</strong>
+        The PayTM API call takes 2-5 seconds. Without <code>X-Accel-Buffering: no</code> and the early flush, Cloudflare/nginx buffer the response and the browser times out before PHP finishes.
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 5. FRONTEND ═══════════════════════════ -->
+<section id="frontend">
+    <h2>5. Frontend: Open Payment Popup</h2>
+
+    <p>There are two options for the payment page:</p>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th></th><th>pay.html</th><th>pay.php</th></tr>
+        <tr><td>Server needed</td><td>No (static file)</td><td>PHP</td></tr>
+        <tr><td>Credentials</td><td>JS variables at top</td><td>config.php</td></tr>
+        <tr><td>SDK loading</td><td>Dynamic (switches per tab)</td><td>One SDK injected by PHP</td></tr>
+        <tr><td>Best for</td><td>Quick testing, demos</td><td>Production sites</td></tr>
+    </table>
+    </div>
+
+    <h3>Key JS Code (same for both)</h3>
+
+<pre><code><span class="cm">// Step 1: Get txn_token from your backend</span>
+<span class="kw">const</span> <span class="var">resp</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'create-order.php'</span>, {
+    <span class="str">method</span>: <span class="str">'POST'</span>,
+    <span class="str">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    <span class="str">body</span>: <span class="fn">JSON.stringify</span>({ <span class="str">mid</span>: creds.mid, <span class="str">key</span>: creds.key, <span class="str">website</span>: creds.website, <span class="str">env</span>: creds.env })
+});
+<span class="kw">const</span> <span class="var">data</span> = <span class="kw">await</span> <span class="var">resp</span>.<span class="fn">json</span>();
+
+<span class="cm">// Step 2: Init and INVOKE (both required)</span>
+window.<span class="var">Paytm</span>.<span class="var">CheckoutJS</span>.<span class="fn">init</span>({
+    <span class="str">"flow"</span>: <span class="str">"DEFAULT"</span>,
+    <span class="str">"data"</span>: {
+        <span class="str">"orderId"</span>: data.order_id,
+        <span class="str">"token"</span>: data.txn_token,
+        <span class="str">"tokenType"</span>: <span class="str">"TXN_TOKEN"</span>,
+        <span class="str">"amount"</span>: data.amount
+    },
+    <span class="str">"handler"</span>: {
+        <span class="str">"notifyMerchant"</span>: (<span class="var">eventName</span>, <span class="var">data</span>) =&gt; { <span class="cm">/* ... */</span> },
+        <span class="str">"transactionStatus"</span>: (<span class="var">status</span>) =&gt; { <span class="cm">/* ... */</span> }
+    }
+}).<span class="fn">then</span>(() =&gt; {
+    window.<span class="var">Paytm</span>.<span class="var">CheckoutJS</span>.<span class="fn">invoke</span>();  <span class="cm">// &lt;-- REQUIRED!</span>
+});
+</code></pre>
+
+    <div class="callout danger">
+        <strong>⚠️ .invoke() is mandatory</strong>
+        <code>.init()</code> alone silently does nothing. The payment popup only opens after calling <code>.invoke()</code>. There is no error or warning if you forget it.
+    </div>
+
+    <div class="callout danger">
+        <strong>⚠️ Load only ONE SDK per page</strong>
+        Loading both staging and production SDKs (<code>jMvXdg...js</code> + <code>acqKIU...js</code>) causes conflicts. If you need both environments on one page, dynamically remove the old SDK script before loading the new one.
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 6. CALLBACK ═══════════════════════════ -->
+<section id="callback">
+    <h2>6. Callback: Verify Payment</h2>
+
+    <p>After payment, PayTM redirects to your <code>callbackUrl</code> with query parameters. <strong>Always double-verify via the Transaction Status API</strong> — don't trust redirect parameters alone.</p>
+
+<pre><code><span class="kw">&lt;?php</span>
+<span class="kw">require_once</span> <span class="kw">__DIR__</span> . <span class="str">'/checksum.php'</span>;
+
+<span class="var">$ptmMid</span>    = <span class="str">"YOUR_MID_HERE"</span>;
+<span class="var">$ptmKey</span>    = <span class="str">"YOUR_MERCHANT_KEY_HERE"</span>;
+<span class="var">$statusUrl</span> = <span class="str">"https://secure.paytmpayments.com/merchant-status/api/v1/getPaymentStatus"</span>;
+
+<span class="cm">// PayTM redirects with query params after payment</span>
+<span class="var">$orderId</span>  = <span class="var">$_GET</span>[<span class="str">'orderId'</span>]  ?? <span class="var">$_GET</span>[<span class="str">'ORDERID'</span>]  ?? <span class="str">''</span>;
+<span class="var">$txnId</span>    = <span class="var">$_GET</span>[<span class="str">'txnId'</span>]    ?? <span class="var">$_GET</span>[<span class="str">'TXNID'</span>]    ?? <span class="str">''</span>;
+<span class="var">$status</span>   = <span class="var">$_GET</span>[<span class="str">'status'</span>]   ?? <span class="var">$_GET</span>[<span class="str">'STATUS'</span>]   ?? <span class="str">''</span>;
+<span class="var">$checksum</span> = <span class="var">$_GET</span>[<span class="str">'checksumhash'</span>] ?? <span class="var">$_GET</span>[<span class="str">'CHECKSUMHASH'</span>] ?? <span class="str">''</span>;
+
+<span class="kw">if</span> (<span class="var">$status</span> !== <span class="str">'TXN_SUCCESS'</span>) {
+    <span class="kw">die</span>(<span class="str">"Payment failed or pending."</span>);
+}
+
+<span class="cm">// Server-side verification</span>
+<span class="var">$body</span> = [<span class="str">'mid'</span> =&gt; <span class="var">$ptmMid</span>, <span class="str">'orderId'</span> =&gt; <span class="var">$orderId</span>];
+<span class="var">$bodyJson</span> = <span class="fn">json_encode</span>(<span class="var">$body</span>, <span class="kw">JSON_UNESCAPED_SLASHES</span>);
+<span class="var">$signature</span> = <span class="fn">ptm_generate_checksum</span>(<span class="var">$bodyJson</span>, <span class="var">$ptmKey</span>);
+
+<span class="var">$request</span> = [
+    <span class="str">'head'</span> =&gt; [<span class="str">'signature'</span> =&gt; <span class="var">$signature</span>],
+    <span class="str">'body'</span> =&gt; <span class="var">$body</span>,
+];
+<span class="var">$signedJson</span> = <span class="fn">json_encode</span>(<span class="var">$request</span>, <span class="kw">JSON_UNESCAPED_SLASHES</span>);
+<span class="var">$resp</span> = <span class="fn">ptm_http_post</span>(<span class="var">$statusUrl</span>, <span class="var">$signedJson</span>);
+<span class="var">$data</span> = <span class="fn">json_decode</span>(<span class="var">$resp</span>[<span class="str">'body'</span>], <span class="kw">true</span>);
+
+<span class="var">$txnStatus</span> = <span class="var">$data</span>[<span class="str">'body'</span>][<span class="str">'resultInfo'</span>][<span class="str">'resultStatus'</span>] ?? <span class="str">''</span>;
+
+<span class="kw">if</span> (<span class="var">$txnStatus</span> === <span class="str">'TXN_SUCCESS'</span>) {
+    <span class="cm">// ✅ Payment confirmed — grant credits/access here</span>
+    <span class="kw">echo</span> <span class="str">"Payment successful! Order: $orderId, Txn: $txnId"</span>;
+} <span class="kw">else</span> {
+    <span class="kw">echo</span> <span class="str">"Payment verification failed."</span>;
+}</code></pre>
+
+    <div class="callout warn">
+        <strong>Always double-verify</strong>
+        The redirect parameters can be spoofed. The Transaction Status API call confirms the payment with PayTM directly.
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 7. STRUCTURE ═══════════════════════════ -->
+<section id="structure">
+    <h2>7. Complete File Structure</h2>
+
+<pre><code>paytm-payment/
+├── <span class="cm">index.html</span>         ← Self-contained payment page (no PHP needed)
+├── <span class="cm">pay.php</span>            ← PHP payment page (alternative)
+├── <span class="cm">config.php</span>         ← Shared credentials config
+├── <span class="cm">checksum.php</span>       ← AES-128-CBC + SHA-256 library
+├── <span class="cm">create-order.php</span>   ← Backend: creates txn token
+└── <span class="cm">callback.php</span>       ← Handles PayTM redirect + verification</code></pre>
+</section>
+
+<!-- ═══════════════════════════ 8. ERRORS ═══════════════════════════ -->
+<section id="errors">
+    <h2>8. Common Errors &amp; Solutions</h2>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>Error</th><th>Cause</th><th>Fix</th></tr>
+        <tr>
+            <td><strong>501 System Error</strong></td>
+            <td>Wrong API domain</td>
+            <td>Use <code>paytmpayments.com</code>, not <code>paytm.in</code></td>
+        </tr>
+        <tr>
+            <td><strong>501 System Error</strong></td>
+            <td>Extra head fields</td>
+            <td>Send ONLY <code>{"signature":"..."}</code> in head</td>
+        </tr>
+        <tr>
+            <td><strong>501 System Error</strong></td>
+            <td>Wrong JSON flags</td>
+            <td>Use <code>JSON_UNESCAPED_SLASHES</code> only</td>
+        </tr>
+        <tr>
+            <td><strong>Unexpected end of JSON input</strong></td>
+            <td>Browser timeout</td>
+            <td>Add <code>X-Accel-Buffering: no</code> + early flush</td>
+        </tr>
+        <tr>
+            <td><strong>Popup doesn't open</strong></td>
+            <td>Missing <code>.invoke()</code></td>
+            <td>Call <code>.then(() => CheckoutJS.invoke())</code></td>
+        </tr>
+        <tr>
+            <td><strong>Popup doesn't open</strong></td>
+            <td>SDK conflict</td>
+            <td>Load only ONE SDK per page</td>
+        </tr>
+        <tr>
+            <td><strong>2005 Checksum invalid</strong></td>
+            <td>Unicode encoding</td>
+            <td>Remove <code>JSON_UNESCAPED_UNICODE</code></td>
+        </tr>
+        <tr>
+            <td><strong>Callback returns HTML</strong></td>
+            <td>PHP fatal error</td>
+            <td>Check <code>require_once</code> paths</td>
+        </tr>
+    </table>
+    </div>
+</section>
+
+<!-- ═══════════════════════════ 9. DOWNLOAD ═══════════════════════════ -->
+<section id="download">
+    <h2>9. Downloadable Sample Code</h2>
+
+    <p>The zip contains complete working code. Replace placeholder values with your credentials:</p>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>File</th><th>Replace</th></tr>
+        <tr><td><code>config.php</code> → <code>$ptmMid</code></td><td>Your Merchant ID</td></tr>
+        <tr><td><code>config.php</code> → <code>$ptmKey</code></td><td>Your Merchant Key</td></tr>
+        <tr><td><code>config.php</code> → <code>$ptmWeb</code></td><td><code>WEBSTAGING</code> or <code>DEFAULT</code></td></tr>
+        <tr><td><code>config.php</code> → <code>$callbackUrl</code></td><td>Your callback URL</td></tr>
+        <tr><td><code>pay.html</code> → <code>YOUR_STAGING_MID</code> etc.</td><td>Your staging credentials</td></tr>
+        <tr><td><code>pay.html</code> → <code>YOUR_PROD_MID</code> etc.</td><td>Your production credentials</td></tr>
+    </table>
+    </div>
+
+    <h3>Quick Start</h3>
+    <ol>
+        <li>Copy all files to your server</li>
+        <li>Edit <code>config.php</code> and <code>pay.html</code> with your credentials</li>
+        <li>Open <code>pay.html</code> or <code>pay.php</code> in browser</li>
+        <li>Click "Pay with PayTM"</li>
+        <li>Complete payment on PayTM page</li>
+        <li>Verify callback fired at <code>callback.php</code></li>
+    </ol>
+
+    <p style="margin-top: 16px;">
+        <a href="paytm-payment-sample.zip" download style="display:inline-block;padding:12px 28px;background:var(--primary);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">📥 Download paytm-payment-sample.zip</a>
+    </p>
+</section>
+
+<!-- ═══════════════════════════ 10. LESSONS ═══════════════════════════ -->
+<section id="lessons">
+    <h2>10. Production Lessons Learned</h2>
+
+    <p>Real-world issues from deploying PayTM alongside Razorpay on a production site. These apply anytime you integrate a payment gateway into a larger application.</p>
+
+    <h3>10.1 JSON API Endpoints Must ALWAYS Return JSON</h3>
+
+    <p>The <code>create-order.php</code> sample uses <code>ob_end_flush()</code> + <code>echo "\n"</code> to prevent browser timeouts during the PayTM API call. This works when the API call succeeds, but <strong>breaks on error</strong>:</p>
+
+    <div class="callout danger">
+        <strong>⚠️ The ob_end_flush() trap</strong>
+        <code>ob_end_flush()</code> ends the output buffer. When the PayTM API call fails and you try <code>ob_clean()</code>, there's no buffer to clean. <code>http_response_code()</code> also fails because headers were sent after <code>echo "\n"</code>. The result: PHP warning HTML mixed into the JSON response &rarr; frontend crashes on <code>res.json()</code> with "Unexpected token '&lt;'".
+    </div>
+
+<pre><code><span class="cm">// ❌ DANGEROUS — breaks JSON on error</span>
+<span class="kw">if</span> (<span class="fn">ob_get_level</span>()) { <span class="fn">ob_end_flush</span>(); }
+<span class="kw">echo</span> <span class="str">"\n"</span>;  <span class="cm">// sends raw output to browser</span>
+<span class="cm">// ... PayTM API call fails ...</span>
+<span class="fn">ob_clean</span>();  <span class="cm">// ❌ FAILS — buffer was ended</span>
+
+<span class="cm">// ✅ SAFE — use ob_start() at the top</span>
+<span class="fn">ob_start</span>();
+<span class="cm">// ... PayTM API call ...</span>
+<span class="fn">ob_clean</span>();  <span class="cm">// ✅ Buffer is still active</span>
+<span class="kw">echo</span> <span class="fn">json_encode</span>([<span class="str">"error"</span> =&gt; <span class="str">"Payment failed"</span>]);</code></pre>
+
+    <h3>10.2 Never Use JSON_UNESCAPED_UNICODE for Checksums</h3>
+
+    <p>PayTM's checksum is computed over the exact JSON bytes sent. <code>JSON_UNESCAPED_UNICODE</code> changes the byte encoding of non-ASCII characters, producing a different checksum than PayTM expects.</p>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th></th><th>Code</th><th>Result</th></tr>
+        <tr><td>❌</td><td><code>json_encode($data, JSON_UNESCAPED_UNICODE)</code></td><td>Checksum mismatch — 2005 error</td></tr>
+        <tr><td>✅</td><td><code>json_encode($data, JSON_UNESCAPED_SLASHES)</code></td><td>Correct checksum</td></tr>
+    </table>
+    </div>
+
+    <p>This applies to <strong>both</strong> generating checksums (sending to PayTM) and verifying them (in callbacks). If one side uses <code>JSON_UNESCAPED_UNICODE</code>, verification silently fails.</p>
+
+    <h3>10.3 Env Variable Names Must Match Exactly</h3>
+
+    <p>When using a centralized environment config, ensure <code>.env</code> variable names match what your lookup functions expect. A single missing prefix breaks everything:</p>
+
+<pre><code><span class="cm"># .env file</span>
+<span class="cm"># ❌ Won't be found if config looks for T84_PROD_RZP_KEY_ID:</span>
+<span class="var">RZP_KEY_ID</span>=rzp_live_xxx
+
+<span class="cm"># ✅ Correct:</span>
+<span class="var">T84_PROD_RZP_KEY_ID</span>=rzp_live_xxx</code></pre>
+
+    <div class="callout warn">
+        <strong>How this manifests</strong>
+        <code>getenv()</code> returns <code>null</code> &rarr; config code throws uncaught exception &rarr; frontend receives HTML fatal error instead of JSON &rarr; "Unexpected token '&lt;'" crash. The actual keys were right there in the .env file — just under the wrong name.
+    </div>
+
+    <h3>10.4 Always Catch Exceptions in JSON Endpoints</h3>
+
+    <p>Payment endpoints are called via <code>fetch()</code>. An uncaught exception produces an HTML error page that breaks the frontend:</p>
+
+<pre><code><span class="cm">// ❌ If env var is missing, throws uncaught RuntimeException</span>
+<span class="kw">define</span>(<span class="str">'RZP_KEY_ID'</span>, <span class="fn">t84_rzp_key_id</span>());
+
+<span class="cm">// ✅ Always wrap in try/catch and return JSON</span>
+<span class="kw">try</span> {
+    <span class="kw">define</span>(<span class="str">'RZP_KEY_ID'</span>, <span class="fn">t84_rzp_key_id</span>());
+} <span class="kw">catch</span> (\<span class="kw">RuntimeException</span> <span class="var">$e</span>) {
+    <span class="fn">header</span>(<span class="str">'Content-Type: application/json'</span>);
+    <span class="fn">http_response_code</span>(<span class="num">500</span>);
+    <span class="kw">echo</span> <span class="fn">json_encode</span>([<span class="str">'error'</span> =&gt; <span class="str">'Payment config missing.'</span>]);
+    <span class="kw">exit</span>;
+}</code></pre>
+
+    <h3>10.5 Frontend: Handle Non-JSON Responses</h3>
+
+    <p>Even with perfect backend code, network issues or Cloudflare error pages can return HTML. Always wrap <code>res.json()</code> in try/catch:</p>
+
+<pre><code><span class="kw">let</span> <span class="var">data</span>;
+<span class="kw">try</span> {
+    <span class="var">data</span> = <span class="kw">await</span> <span class="var">res</span>.<span class="fn">json</span>();
+} <span class="kw">catch</span> (<span class="var">e</span>) {
+    <span class="kw">throw new</span> <span class="kw">Error</span>(<span class="str">'Payment service unavailable. Please try again.'</span>);
+}</code></pre>
+
+    <h3>10.6 Head Must Contain ONLY signature</h3>
+
+    <p>The <code>head</code> object must have exactly one field — <code>signature</code>. Adding <code>requestTimestamp</code>, <code>channelId</code>, <code>clientId</code>, or <code>version</code> causes a <code>501 System Error</code>. Some SDK wrappers include these by default — strip them.</p>
+
+    <div class="callout ok">
+        <strong>Working production setup</strong>
+        With all these fixes applied, PayTM and Razorpay run side-by-side on <code>tender84.com</code> without issues. Both gateways return clean JSON on success <em>and</em> on failure, so the frontend always gets a parseable response.
+    </div>
+</section>
+
+<footer>
+    <p>Based on reverse-engineering the official PayTM WordPress plugin. Tested on PHP 7.4+ / 8.x, cPanel, and behind Cloudflare.</p>
+    <p>Section 10 based on production deployment experience on tender84.com (June 2026).</p>
+    <p>No API keys or secrets are included in the sample code.</p>
+</footer>
+
+</div>
+</body>
+</html>
