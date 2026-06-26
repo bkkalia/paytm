@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayTM Payment</title>
+    <style>
+        :root { --primary: #1a56db; --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #6b7280; --border: #e5e7eb; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; max-width: 400px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .amount { font-size: 48px; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 4px; }
+        .env-badge { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+        .info-rows { margin-bottom: 20px; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+        .info-row .k { color: var(--muted); }
+        .info-row .v { font-weight: 500; font-family: monospace; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        button:hover { background: #1e40af; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status { margin-bottom: 16px; padding: 10px; border-radius: 8px; font-size: 14px; display: none; }
+        .status.info { display: block; background: #e0e7ff; color: #1e40af; }
+        .status.error { display: block; background: #fef2f2; color: #991b1b; }
+        .status.success { display: block; background: #dcfce7; color: #166534; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toggle { display: flex; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .toggle button { flex: 1; padding: 8px; border: none; background: #f8fafc; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); border-radius: 0; }
+        .toggle button.active { background: var(--primary); color: #fff; }
+        .toggle button:hover:not(.active) { background: #e2e8f0; }
+        .cred-section { display: none; margin-bottom: 12px; }
+        .cred-section.active { display: block; }
+        .cred-section input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: monospace; margin-bottom: 6px; }
+        .cred-section label { font-size: 12px; color: var(--muted); }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 16px 0; font-size: 13px; color: var(--muted); }
+        .log { background: #1e293b; color: #e2e8f0; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 180px; overflow-y: auto; margin-top: 16px; display: none; }
+        .log.show { display: block; }
+        .log .entry { padding: 2px 0; border-bottom: 1px solid #334155; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="amount">&#x20B9;10.00</div>
+    <div class="env-badge"><span id="envLabel">Staging</span> &middot; <span id="version">v1.0</span></div>
+
+    <!-- Tab: Staging / Production -->
+    <div class="toggle">
+        <button class="active" onclick="switchEnv('staging')">🧪 Staging</button>
+        <button onclick="switchEnv('production')">🏭 Production</button>
+    </div>
+
+    <!-- Staging credentials -->
+    <div id="cred-staging" class="cred-section active">
+        <label>Merchant ID</label>
+        <input id="stageMid" value="YOUR_STAGING_MID" oninput="updateDisplay()">
+        <label>Merchant Key</label>
+        <input id="stageKey" value="YOUR_STAGING_KEY" oninput="updateDisplay()">
+        <label>Website</label>
+        <input id="stageWeb" value="WEBSTAGING" style="font-family:sans-serif;">
+    </div>
+
+    <!-- Production credentials -->
+    <div id="cred-production" class="cred-section">
+        <label>Merchant ID</label>
+        <input id="prodMid" value="YOUR_PROD_MID" oninput="updateDisplay()">
+        <label>Merchant Key</label>
+        <input id="prodKey" value="YOUR_PROD_KEY" oninput="updateDisplay()">
+        <label>Website</label>
+        <input id="prodWeb" value="DEFAULT" style="font-family:sans-serif;">
+    </div>
+
+    <!-- Gateway info -->
+    <div class="info-rows">
+        <div class="info-row"><span class="k">Gateway</span><span class="v" id="gwDisplay">-</span></div>
+    </div>
+
+    <div class="checkbox-row">
+        <input type="checkbox" id="agreeCheck" onchange="document.getElementById('payBtn').disabled = !this.checked">
+        <label for="agreeCheck">I understand this is a test payment.</label>
+    </div>
+
+    <div id="status" class="status"></div>
+    <button id="payBtn" disabled onclick="startPayment()">Pay with PayTM</button>
+
+    <div id="logPanel" class="log"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIGURATION — edit these URLs to match your server
+// ═══════════════════════════════════════════════════
+const CREATE_ORDER_URL = 'create-order.php';  // your backend endpoint
+const CALLBACK_URL     = 'https://yoursite.com/callback.php';  // your callback
+
+// ═══════════════════════════════════════════════════
+// Runtime
+// ═══════════════════════════════════════════════════
+let activeEnv = 'staging';
+let sdkLoaded = null;  // tracks which SDK is loaded
+
+function switchEnv(env) {
+    activeEnv = env;
+    document.querySelectorAll('.toggle button').forEach((b, i) => {
+        b.classList.toggle('active', (i === 0 && env === 'staging') || (i === 1 && env === 'production'));
+    });
+    document.querySelectorAll('.cred-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('cred-' + env).classList.add('active');
+    document.getElementById('envLabel').textContent = env === 'staging' ? 'Staging' : 'Production';
+    updateDisplay();
+    loadSDK();
+}
+
+function getCreds() {
+    if (activeEnv === 'production') {
+        return {
+            mid: document.getElementById('prodMid').value.trim(),
+            key: document.getElementById('prodKey').value.trim(),
+            website: document.getElementById('prodWeb').value.trim(),
+            env: 'production'
+        };
+    }
+    return {
+        mid: document.getElementById('stageMid').value.trim(),
+        key: document.getElementById('stageKey').value.trim(),
+        website: document.getElementById('stageWeb').value.trim(),
+        env: 'staging'
+    };
+}
+
+function updateDisplay() {
+    const creds = getCreds();
+    const gw = creds.env === 'staging' ? 'securestage.paytmpayments.com' : 'secure.paytmpayments.com';
+    document.getElementById('gwDisplay').textContent = gw;
+}
+
+/**
+ * Dynamically load the correct PayTM JS SDK.
+ * Only one SDK is loaded at a time to avoid conflicts.
+ */
+function loadSDK() {
+    const creds = getCreds();
+    const sdkKey = creds.mid + '|' + creds.env;
+    if (sdkLoaded === sdkKey) return;  // already loaded
+
+    // Remove old SDK scripts
+    document.querySelectorAll('script[src*="merchantpgpui"]').forEach(s => s.remove());
+    // Reset Paytm global
+    if (window.Paytm) { delete window.Paytm.CheckoutJS; }
+
+    const gw = creds.env === 'staging' ? 'securestage.paytmpayments.com' : 'secure.paytmpayments.com';
+    const sdkUrl = 'https://' + gw + '/merchantpgpui/checkoutjs/merchants/' + encodeURIComponent(creds.mid) + '.js';
+
+    addLog('Loading SDK: ' + sdkUrl);
+    const script = document.createElement('script');
+    script.src = sdkUrl;
+    script.onload = function() { sdkLoaded = sdkKey; addLog('SDK loaded.'); };
+    script.onerror = function() { addLog('WARNING: Failed to load SDK.'); };
+    document.head.appendChild(script);
+}
+
+// ═══════════════════════════════════════════════════
+// Logging
+// ═══════════════════════════════════════════════════
+function addLog(msg) {
+    const panel = document.getElementById('logPanel');
+    panel.classList.add('show');
+    const div = document.createElement('div');
+    div.className = 'entry';
+    div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+    panel.appendChild(div);
+    panel.scrollTop = panel.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════
+// Payment flow
+// ═══════════════════════════════════════════════════
+function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + type;
+}
+
+async function startPayment() {
+    const btn = document.getElementById('payBtn');
+    const creds = getCreds();
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating order...';
+    showStatus('Contacting PayTM (' + creds.env + ')...', 'info');
+    addLog('Creating order: ' + creds.mid);
+
+    try {
+        // Step 1: Get txn_token from backend
+        const resp = await fetch(CREATE_ORDER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mid: creds.mid,
+                key: creds.key,
+                website: creds.website,
+                env: creds.env
+            })
+        });
+
+        const data = await resp.json();
+        addLog('Response: ' + JSON.stringify(data).substring(0, 200));
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to create order');
+        }
+
+        addLog('Got txn_token. Opening PayTM...');
+        showStatus('Opening payment page...', 'info');
+
+        // Step 2: Open PayTM CheckoutJS
+        const gwHost = creds.env === 'staging' ? 'securestage.paytmpayments.com' : 'secure.paytmpayments.com';
+
+        // Fallback timer: if popup doesn't open in 8s, redirect via form
+        let popupOpened = false;
+        const fallbackTimer = setTimeout(() => {
+            if (!popupOpened) {
+                addLog('Popup not responding — redirecting via form...');
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'https://' + gwHost + '/theia/processTransaction';
+                form.innerHTML = `
+                    <input type="hidden" name="mid" value="${data.mid}">
+                    <input type="hidden" name="orderId" value="${data.order_id}">
+                    <input type="hidden" name="txnToken" value="${data.txn_token}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }, 8000);
+
+        window.Paytm.CheckoutJS.init({
+            "flow": "DEFAULT",
+            "data": {
+                "orderId": data.order_id,
+                "token": data.txn_token,
+                "tokenType": "TXN_TOKEN",
+                "amount": data.amount
+            },
+            "handler": {
+                "notifyMerchant": function(eventName, evtData) {
+                    addLog('PayTM event [' + eventName + ']: ' + JSON.stringify(evtData));
+                    if (eventName === 'SESSION_EXPIRED') {
+                        showStatus('Session expired. Reload and try again.', 'error');
+                    }
+                },
+                "transactionStatus": function(paymentStatus) {
+                    addLog('Payment status: ' + JSON.stringify(paymentStatus));
+                }
+            }
+        }).then(function() {
+            clearTimeout(fallbackTimer);
+            popupOpened = true;
+            addLog('CheckoutJS initialized. Invoking...');
+            window.Paytm.CheckoutJS.invoke();
+            btn.innerHTML = 'Payment in progress...';
+        }).catch(function(err) {
+            clearTimeout(fallbackTimer);
+            addLog('CheckoutJS error: ' + JSON.stringify(err));
+            throw new Error('CheckoutJS init failed');
+        });
+
+    } catch (err) {
+        addLog('ERROR: ' + err.message);
+        showStatus('Error: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Pay with PayTM';
+    }
+}
+
+// ═══════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════
+switchEnv('staging');
+updateDisplay();
+</script>
+</body>
+</html>
